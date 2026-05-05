@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo de Telas · Celeritas Manufacturing</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8; --ink: #1a1714; --warm-grey: #8c8178;
+    --accent: #c4a882; --accent-dark: #9a7a54; --surface: #faf7f2;
+    --border: #ddd5c8; --tag-bg: #ede8df; --available: #4a7c59; --low: #b85c38;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--cream); color:var(--ink); font-family:'Cormorant Garamond',serif; min-height:100vh; }
+
+  header { background:var(--ink); color:var(--cream); padding:3rem 4rem 2.5rem; position:relative; overflow:hidden; }
+  header::before { content:''; position:absolute; top:-60px; right:-60px; width:300px; height:300px; border-radius:50%; border:1px solid rgba(196,168,130,0.2); }
+  .header-inner { position:relative; z-index:1; max-width:1400px; margin:0 auto; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:2rem; }
+  .header-label { font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.25em; color:var(--accent); text-transform:uppercase; margin-bottom:1rem; }
+  header h1 { font-size:clamp(2.2rem,4vw,4rem); font-weight:300; letter-spacing:-0.02em; line-height:1; margin-bottom:0.5rem; }
+  header h1 em { font-style:italic; color:var(--accent); }
+  .header-stats { display:flex; gap:2rem; align-items:flex-end; }
+  .stat { text-align:center; }
+  .stat-num { font-size:2.2rem; font-weight:300; color:var(--accent); line-height:1; }
+  .stat-lbl { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.15em; color:var(--warm-grey); text-transform:uppercase; margin-top:0.3rem; }
+
+  .controls { background:var(--surface); border-bottom:1px solid var(--border); padding:1.2rem 4rem; position:sticky; top:0; z-index:100; }
+  .controls-inner { max-width:1400px; margin:0 auto; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; }
+  .count-badge { font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--warm-grey); letter-spacing:0.1em; white-space:nowrap; margin-left:auto; }
+
+  /* Dropdown con checkboxes */
+  .dd-wrap { position:relative; }
+  .dd-btn { display:flex; align-items:center; gap:0.5rem; padding:0.6rem 1rem; border:1px solid var(--border); background:white; font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--ink); cursor:pointer; white-space:nowrap; min-width:160px; justify-content:space-between; user-select:none; }
+  .dd-btn:hover { border-color:var(--accent); }
+  .dd-btn.active { border-color:var(--accent-dark); }
+  .dd-badge { background:var(--accent); color:white; font-size:0.55rem; padding:0.1rem 0.4rem; border-radius:10px; margin-left:4px; }
+  .dd-arrow { font-size:0.55rem; color:var(--warm-grey); transition:transform 0.2s; }
+  .dd-btn.open .dd-arrow { transform:rotate(180deg); }
+  .dd-menu { display:none; position:absolute; top:calc(100% + 2px); left:0; min-width:100%; background:white; border:1px solid var(--border); z-index:200; max-height:240px; overflow-y:auto; box-shadow:0 8px 24px rgba(26,23,20,0.1); }
+  .dd-menu.open { display:block; }
+  .dd-item { display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.9rem; font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--ink); cursor:pointer; white-space:nowrap; }
+  .dd-item:hover { background:var(--tag-bg); }
+  .dd-item input[type=checkbox] { accent-color:var(--accent-dark); width:13px; height:13px; cursor:pointer; flex-shrink:0; }
+
+  /* Botón limpiar */
+  .clear-btn { display:none; align-items:center; gap:0.4rem; padding:0.6rem 0.9rem; border:1px solid var(--border); background:none; font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--warm-grey); cursor:pointer; letter-spacing:0.08em; text-transform:uppercase; transition:all 0.2s; }
+  .clear-btn:hover { border-color:var(--low); color:var(--low); }
+  .clear-btn.visible { display:flex; }
+
+  .loader { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8rem 2rem; gap:1.5rem; }
+  .spinner { width:40px; height:40px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loader p { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--warm-grey); letter-spacing:0.15em; text-transform:uppercase; }
+  .error-box { max-width:500px; margin:4rem auto; text-align:center; padding:2.5rem; background:white; border-top:3px solid var(--low); }
+  .error-box h3 { font-size:1.3rem; margin-bottom:0.8rem; color:var(--low); }
+  .error-box p { font-size:0.85rem; color:var(--warm-grey); font-style:italic; line-height:1.6; margin-bottom:1.2rem; }
+  .retry-btn { background:var(--ink); color:white; border:none; padding:0.7rem 1.8rem; font-family:'DM Mono',monospace; font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; }
+
+  .grid { max-width:1400px; margin:0 auto; padding:3rem 4rem; display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:2px; }
+  .card { background:white; position:relative; overflow:hidden; transition:transform 0.3s,box-shadow 0.3s; cursor:pointer; animation:fadeIn 0.4s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  .card:hover { transform:translateY(-4px); box-shadow:0 20px 60px rgba(26,23,20,0.15); z-index:2; }
+  .card-img-wrap { overflow:hidden; position:relative; background:var(--tag-bg); height:230px; }
+  .card-img { width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.5s, opacity 0.4s; opacity:0; }
+  .card-img.loaded { opacity:1; }
+  .card:hover .card-img { transform:scale(1.04); }
+  .card-img-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:0.5rem; position:absolute; inset:0; }
+  .card-img-placeholder span { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--warm-grey); }
+  .card-body { padding:1.1rem 1.3rem 1.3rem; border-top:2px solid var(--border); }
+  .card-fabric { font-size:0.62rem; font-family:'DM Mono',monospace; letter-spacing:0.15em; color:var(--accent-dark); text-transform:uppercase; margin-bottom:0.35rem; }
+  .card-color { font-size:1.25rem; font-weight:400; letter-spacing:-0.01em; line-height:1.2; margin-bottom:0.5rem; }
+  .card-blend { font-family:'Inter',sans-serif; font-size:0.72rem; font-weight:300; color:var(--warm-grey); line-height:1.5; margin-bottom:0.9rem; min-height:2em; }
+  .card-meta { display:flex; justify-content:space-between; align-items:flex-end; border-top:1px solid var(--border); padding-top:0.75rem; }
+  .meta-item { text-align:center; }
+  .meta-val { font-family:'DM Mono',monospace; font-size:0.9rem; color:var(--ink); }
+  .meta-lbl { font-family:'DM Mono',monospace; font-size:0.56rem; letter-spacing:0.1em; color:var(--warm-grey); text-transform:uppercase; margin-top:0.12rem; }
+  .avail-tag { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.1em; color:var(--available); text-transform:uppercase; display:flex; align-items:center; gap:4px; }
+  .avail-dot { width:7px; height:7px; border-radius:50%; background:var(--available); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(26,23,20,0.82); z-index:1000; align-items:center; justify-content:center; padding:2rem; backdrop-filter:blur(4px); }
+  .modal-overlay.open { display:flex; }
+  .modal { background:white; max-width:820px; width:100%; max-height:92vh; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; position:relative; animation:modalIn 0.28s ease; }
+  @keyframes modalIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+  .modal-img-wrap { position:relative; min-height:380px; background:var(--tag-bg); overflow:hidden; }
+  .modal-img-slider { display:flex; width:100%; height:100%; transition:transform 0.35s ease; }
+  .modal-img { width:100%; height:100%; object-fit:cover; display:block; flex-shrink:0; }
+  /* Toggle buttons */
+  .img-toggle { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:2px; border:1px solid rgba(255,255,255,0.3); overflow:hidden; z-index:5; }
+  .img-toggle-btn { padding:5px 14px; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; border:none; cursor:pointer; transition:all 0.2s; background:rgba(26,23,20,0.55); color:rgba(245,240,232,0.7); }
+  .img-toggle-btn.active { background:var(--ink); color:var(--cream); }
+  /* Dots indicator (mobile) */
+  .img-dots { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:5; }
+  .img-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); transition:background 0.2s; cursor:pointer; }
+  .img-dot.active { background:white; }
+  .modal-content { padding:2.5rem; display:flex; flex-direction:column; }
+  .modal-close { position:absolute; top:0; right:0; width:38px; height:38px; background:var(--ink); color:white; border:none; cursor:pointer; font-size:1.3rem; display:flex; align-items:center; justify-content:center; z-index:10; }
+  .modal-fabric { font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.2em; color:var(--accent-dark); text-transform:uppercase; margin-bottom:0.5rem; }
+  .modal-color { font-size:1.9rem; font-weight:300; letter-spacing:-0.02em; line-height:1.1; margin-bottom:0.6rem; }
+  .modal-blend { font-family:'Inter',sans-serif; font-size:0.82rem; font-weight:300; color:var(--warm-grey); line-height:1.6; margin-bottom:1.4rem; padding-bottom:1.4rem; border-bottom:1px solid var(--border); }
+  .modal-specs { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; }
+  .spec-box { background:var(--tag-bg); padding:0.8rem 1rem; }
+  .spec-val { font-family:'DM Mono',monospace; font-size:1.25rem; color:var(--ink); }
+  .spec-lbl { font-family:'DM Mono',monospace; font-size:0.58rem; letter-spacing:0.15em; color:var(--warm-grey); text-transform:uppercase; margin-top:0.25rem; }
+  .empty { grid-column:1/-1; text-align:center; padding:6rem 2rem; color:var(--warm-grey); }
+  .empty p { font-style:italic; font-size:1.1rem; }
+  footer { background:var(--ink); color:var(--warm-grey); text-align:center; padding:2rem; font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase; margin-top:4rem; }
+
+  @media (max-width:768px) {
+    header, .controls, .grid { padding-left:1.5rem; padding-right:1.5rem; }
+    .modal { grid-template-columns:1fr; }
+    .modal-img-wrap { min-height:220px; max-height:280px; }
+    .grid { grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); padding:1.5rem; }
+    .header-stats { gap:1.2rem; }
+    .controls-inner { gap:0.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-label">Celeritas Manufacturing</div>
+      <h1>Catálogo de<br><em>Telas Disponibles</em></h1>
+    </div>
+    <div class="header-stats">
+      <div class="stat"><div class="stat-num" id="statTelas">—</div><div class="stat-lbl">Telas</div></div>
+      <div class="stat"><div class="stat-num" id="statLibras">—</div><div class="stat-lbl">Libras disponibles</div></div>
+      <div class="stat"><div class="stat-num" id="statTipos">—</div><div class="stat-lbl">Tipos</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="controls" id="controls" style="display:none">
+  <div class="controls-inner">
+
+    <div class="dd-wrap">
+      <div class="dd-btn" id="telaBtnWrap" onclick="toggleDD('tela')">
+        <span id="telaLabel">Todas las telas</span>
+        <span class="dd-arrow">&#9660;</span>
+      </div>
+      <div class="dd-menu" id="telaMenu"></div>
+    </div>
+
+    <div class="dd-wrap">
+      <div class="dd-btn" id="blendBtnWrap" onclick="toggleDD('blend')">
+        <span id="blendLabel">Todas las composiciones</span>
+        <span class="dd-arrow">&#9660;</span>
+      </div>
+      <div class="dd-menu" id="blendMenu"></div>
+    </div>
+
+    <div class="dd-wrap">
+      <div class="dd-btn" id="colorBtnWrap" onclick="toggleDD('color')">
+        <span id="colorLabel">Todos los colores</span>
+        <span class="dd-arrow">&#9660;</span>
+      </div>
+      <div class="dd-menu" id="colorMenu"></div>
+    </div>
+
+    <button class="clear-btn" id="clearBtn" onclick="clearFilters()">
+      &#10005; Limpiar filtros
+    </button>
+
+    <div class="count-badge" id="countBadge"></div>
+  </div>
+</div>
+
+<div id="mainContent">
+  <div class="loader"><div class="spinner"></div><p>Cargando inventario...</p></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-img-wrap" id="modalImgWrap">
+      <div class="modal-img-slider" id="modalSlider">
+        <img class="modal-img" id="modalImg" src="" alt="" onerror="this.style.display='none'">
+        <img class="modal-img" id="modalImgCamisa" src="" alt="" style="display:none" onerror="this.style.display='none'">
+      </div>
+      <div class="img-toggle" id="imgToggle" style="display:none">
+        <button class="img-toggle-btn active" id="btnTela" onclick="switchPhoto(0)">Tela</button>
+        <button class="img-toggle-btn" id="btnPrenda" onclick="switchPhoto(1)">Prenda</button>
+      </div>
+      <div class="img-dots" id="imgDots" style="display:none">
+        <div class="img-dot active" onclick="switchPhoto(0)"></div>
+        <div class="img-dot" onclick="switchPhoto(1)"></div>
+      </div>
+    </div>
+    <div class="modal-content">
+      <div class="modal-fabric" id="modalFabric"></div>
+      <div class="modal-color" id="modalColor"></div>
+      <div class="modal-blend" id="modalBlend"></div>
+      <div class="modal-specs">
+        <div class="spec-box"><div class="spec-val" id="modalGrams"></div><div class="spec-lbl">Gramos / m²</div></div>
+        <div class="spec-box"><div class="spec-val" id="modalLibras"></div><div class="spec-lbl">Libras disponibles</div></div>
+        <div class="spec-box"><div class="spec-val" id="modalUom"></div><div class="spec-lbl">Unidad de compra</div></div>
+      </div>
+    </div>
+    <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('open')">×</button>
+  </div>
+</div>
+
+<footer>Celeritas Manufacturing · Catálogo de Telas Disponibles</footer>
+
+<script>
+const API_URL = 'https://default01de7128f44f4d04b3006a199889f3.2d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/f3bf85f53e8a41238fb31d77b5ce720a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=QRUS8Vebf5rNs_AYxZjhiRFZhP0HiZK7lEAHgXoWC9Q';
+
+let allData = [];
+let observer = null;
+
+// Convierte cualquier formato de Google Drive a URL directa de imagen
+function toImgUrl(url) {
+  if (!url || !url.startsWith('http')) return '';
+  url = url.trim();
+
+  // Formato: ?id=FILE_ID  (uc?export=view&id=... o cualquier variante)
+  const m1 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m1) return 'https://lh3.googleusercontent.com/d/' + m1[1] + '=w800';
+
+  // Formato: /file/d/FILE_ID/
+  const m2 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1] + '=w800';
+
+  // URL directa de imagen
+  if (/\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url)) return url;
+
+  return url;
+}
+
+async function loadData() {
+  document.getElementById('mainContent').innerHTML = '<div class="loader"><div class="spinner"></div><p>Cargando inventario...</p></div>';
+  document.getElementById('controls').style.display = 'none';
+
+  try {
+    const res = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.json();
+    let rows = Array.isArray(raw) ? raw : (raw.value || []);
+
+    allData = rows.map(r => ({
+      tela:        r.Tela        || r.tela        || '',
+      color:       r.Color       || r.color       || '',
+      blend:       r.Blend       || r.blend       || '',
+      grams:       parseFloat(r.Grams   || r.grams   || 0) || 0,
+      libras:      parseFloat(r.Libras  || r.libras  || 0) || 0,
+      purchaseuom: r.Purchaseuom || r.purchaseuom  || '',
+      fotoUrl:     toImgUrl(String(r.Link || r.link || r.Foto || r.foto || '').trim()),
+      camisaUrl:   toImgUrl(String(r.LinkCamisa || r.linkcamisa || r.Linkcamisa || '').trim())
+    })).filter(r => r.tela || r.color);
+
+    buildFilters();
+    updateStats();
+    document.getElementById('mainContent').innerHTML = '<div class="grid" id="grid"></div>';
+    renderGrid();
+    document.getElementById('controls').style.display = '';
+
+  } catch(err) {
+    document.getElementById('mainContent').innerHTML =
+      '<div class="error-box"><h3>No se pudo conectar</h3><p>Error: <em>' + err.message + '</em></p><button class="retry-btn" onclick="loadData()">Reintentar</button></div>';
+  }
+}
+
+// Estado de filtros: Set de valores seleccionados por categoría
+const filters = { tela: new Set(), blend: new Set(), color: new Set() };
+
+const LABELS = { tela: 'Todas las telas', blend: 'Todas las composiciones', color: 'Todos los colores' };
+const FIELD  = { tela: 'tela', blend: 'blend', color: 'color' };
+
+function getAvailable() {
+  // Qué valores están disponibles para cada dimensión dado lo seleccionado en las otras dos
+  const byTela  = allData.filter(d => (!filters.tela.size  || filters.tela.has(d.tela))  && (!filters.color.size || filters.color.has(d.color)));
+  const byBlend = allData.filter(d => (!filters.tela.size  || filters.tela.has(d.tela))  && (!filters.blend.size || filters.blend.has(d.blend)));
+  const byColor = allData.filter(d => (!filters.blend.size || filters.blend.has(d.blend))&& (!filters.color.size || filters.color.has(d.color)));
+  return {
+    tela:  [...new Set(byColor.map(d => d.tela).filter(Boolean))].sort(),
+    blend: [...new Set(byTela.map(d => d.blend).filter(Boolean))].sort(),
+    color: [...new Set(byBlend.map(d => d.color).filter(Boolean))].sort()
+  };
+}
+
+function buildMenu(key, available) {
+  const menu = document.getElementById(key + 'Menu');
+  const sel  = filters[key];
+  const frag = document.createDocumentFragment();
+  available.forEach(v => {
+    const lbl = document.createElement('label');
+    lbl.className = 'dd-item';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = sel.has(v);
+    cb.addEventListener('change', () => toggleVal(key, v, cb.checked));
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(' ' + v));
+    frag.appendChild(lbl);
+  });
+  menu.innerHTML = '';
+  menu.appendChild(frag);
+}
+
+function updateLabel(key) {
+  const sel = filters[key];
+  const lbl = document.getElementById(key + 'Label');
+  const btn = document.getElementById(key + 'BtnWrap');
+  if (sel.size === 0) {
+    lbl.innerHTML = LABELS[key];
+    btn.classList.remove('active');
+  } else if (sel.size === 1) {
+    lbl.innerHTML = [...sel][0] + ' <span class="dd-badge">1</span>';
+    btn.classList.add('active');
+  } else {
+    lbl.innerHTML = LABELS[key].split(' ')[0] + '... <span class="dd-badge">' + sel.size + '</span>';
+    btn.classList.add('active');
+  }
+}
+
+function toggleVal(key, val, checked) {
+  if (checked) filters[key].add(val); else filters[key].delete(val);
+  refreshAll();
+}
+
+function refreshAll() {
+  const avail = getAvailable();
+  ['tela','blend','color'].forEach(k => {
+    buildMenu(k, avail[k]);
+    updateLabel(k);
+  });
+  const hasAny = filters.tela.size || filters.blend.size || filters.color.size;
+  const cb = document.getElementById('clearBtn');
+  if (cb) { hasAny ? cb.classList.add('visible') : cb.classList.remove('visible'); }
+  renderGrid();
+}
+
+function toggleDD(key) {
+  const menu = document.getElementById(key + 'Menu');
+  const btn  = document.getElementById(key + 'BtnWrap');
+  const isOpen = menu.classList.contains('open');
+  // Cerrar todos
+  ['tela','blend','color'].forEach(k => {
+    document.getElementById(k + 'Menu').classList.remove('open');
+    document.getElementById(k + 'BtnWrap').classList.remove('open');
+  });
+  if (!isOpen) {
+    menu.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
+function clearFilters() {
+  filters.tela.clear(); filters.blend.clear(); filters.color.clear();
+  refreshAll();
+}
+
+// Cerrar dropdowns al hacer clic fuera
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dd-wrap')) {
+    ['tela','blend','color'].forEach(k => {
+      document.getElementById(k + 'Menu')?.classList.remove('open');
+      document.getElementById(k + 'BtnWrap')?.classList.remove('open');
+    });
+  }
+});
+
+function buildFilters() {
+  refreshAll();
+}
+
+function updateStats() {
+  document.getElementById('statTelas').textContent = allData.length;
+  const totalLib = allData.reduce((s,d) => s + d.libras, 0);
+  document.getElementById('statLibras').textContent = totalLib.toLocaleString('en-US', {maximumFractionDigits:2});
+  document.getElementById('statTipos').textContent = new Set(allData.map(d=>d.tela).filter(Boolean)).size;
+}
+
+function getFiltered() {
+  return allData.filter(d =>
+    (!filters.tela.size  || filters.tela.has(d.tela))  &&
+    (!filters.blend.size || filters.blend.has(d.blend)) &&
+    (!filters.color.size || filters.color.has(d.color))
+  );
+}
+
+function setupLazyLoad() {
+  if (observer) observer.disconnect();
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target.querySelector('img[data-src]');
+        if (img) {
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+          img.onload  = () => img.classList.add('loaded');
+          img.onerror = () => {
+            img.style.display = 'none';
+            const ph = entry.target.querySelector('.card-img-placeholder');
+            if (ph) ph.style.display = 'flex';
+          };
+        }
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '300px' });
+  document.querySelectorAll('.card-img-wrap').forEach(el => observer.observe(el));
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  if (!grid) return;
+  const items = getFiltered();
+  document.getElementById('countBadge').textContent = items.length + ' resultado' + (items.length !== 1 ? 's' : '');
+
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty"><p>No se encontraron telas con esos criterios</p></div>';
+    return;
+  }
+
+  grid.innerHTML = items.map((d, i) => {
+    const hasImg = !!d.fotoUrl;
+    return '<div class="card" onclick="openModal(' + allData.indexOf(d) + ')" style="animation-delay:' + (i * 0.02) + 's">'
+      + '<div class="card-img-wrap">'
+      + '<div class="card-img-placeholder" style="display:' + (hasImg ? 'none' : 'flex') + '">'
+      + '<span style="font-size:1.8rem">&#129525;</span><span>Sin foto</span></div>'
+      + (hasImg ? '<img class="card-img" data-src="' + d.fotoUrl + '" alt="' + d.color + '">' : '')
+      + '</div>'
+      + '<div class="card-body">'
+      + '<div class="card-fabric">' + d.tela + '</div>'
+      + '<div class="card-color">' + (d.color || '—') + '</div>'
+      + '<div class="card-blend">' + (d.blend || '') + '</div>'
+      + '<div class="card-meta">'
+      + '<div class="meta-item"><div class="meta-val">' + (d.grams || '—') + '<span style="font-size:0.6rem;color:var(--warm-grey)"> g/m²</span></div><div class="meta-lbl">Peso</div></div>'
+      + '<div class="meta-item"><div class="meta-val">' + (d.libras ? d.libras.toLocaleString('en-US', {maximumFractionDigits:0}) : '—') + '<span style="font-size:0.6rem;color:var(--warm-grey)"> lb</span></div><div class="meta-lbl">Disponible</div></div>'
+      + '<div class="avail-tag"><span class="avail-dot"></span>En stock</div>'
+      + '</div></div></div>';
+  }).join('');
+
+  setupLazyLoad();
+}
+
+let currentPhoto = 0;
+
+function switchPhoto(idx) {
+  currentPhoto = idx;
+  const slider = document.getElementById('modalSlider');
+  slider.style.transform = 'translateX(-' + (idx * 100) + '%)';
+  document.querySelectorAll('.img-toggle-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+  document.querySelectorAll('.img-dot').forEach((d,i) => d.classList.toggle('active', i===idx));
+}
+
+function openModal(idx) {
+  const d = allData[idx];
+  if (!d) return;
+  currentPhoto = 0;
+
+  const mImg = document.getElementById('modalImg');
+  mImg.style.display = d.fotoUrl ? '' : 'none';
+  mImg.src = d.fotoUrl || '';
+
+  const mCamisa = document.getElementById('modalImgCamisa');
+  const hasCamisa = !!d.camisaUrl;
+  if (hasCamisa) {
+    mCamisa.style.display = '';
+    mCamisa.src = d.camisaUrl;
+  } else {
+    mCamisa.style.display = 'none';
+    mCamisa.src = '';
+  }
+
+  // Reset slider
+  const slider = document.getElementById('modalSlider');
+  slider.style.transform = 'translateX(0)';
+
+  // Toggle buttons (desktop) vs dots (mobile)
+  const isMobile = window.innerWidth < 640;
+  document.getElementById('imgToggle').style.display = hasCamisa && !isMobile ? 'flex' : 'none';
+  document.getElementById('imgDots').style.display   = hasCamisa && isMobile  ? 'flex' : 'none';
+  document.querySelectorAll('.img-toggle-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.querySelectorAll('.img-dot').forEach((dot,i) => dot.classList.toggle('active', i===0));
+
+  document.getElementById('modalFabric').textContent = d.tela;
+  document.getElementById('modalColor').textContent  = d.color || '—';
+  document.getElementById('modalBlend').textContent  = d.blend || '';
+  document.getElementById('modalGrams').textContent  = d.grams  ? d.grams + ' g'  : '—';
+  document.getElementById('modalLibras').textContent = d.libras ? d.libras.toLocaleString('en-US', {maximumFractionDigits:2}) + ' lb' : '—';
+  document.getElementById('modalUom').textContent    = d.purchaseuom || '—';
+  document.getElementById('modalOverlay').classList.add('open');
+
+  // Swipe gesture for mobile
+  setupSwipe(document.getElementById('modalImgWrap'), hasCamisa);
+}
+
+function setupSwipe(el, hasCamisa) {
+  el.ontouchstart = null; el.ontouchmove = null; el.ontouchend = null;
+  if (!hasCamisa) return;
+  let startX = 0, diffX = 0;
+  el.ontouchstart = e => { startX = e.touches[0].clientX; diffX = 0; };
+  el.ontouchmove  = e => { diffX = e.touches[0].clientX - startX; };
+  el.ontouchend   = () => {
+    if (Math.abs(diffX) > 40) switchPhoto(diffX < 0 ? 1 : 0);
+  };
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay'))
+    document.getElementById('modalOverlay').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modalOverlay').classList.remove('open');
+});
+
+loadData();
+</script>
+</body>
+</html>
