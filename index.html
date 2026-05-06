@@ -453,6 +453,7 @@ function openLightbox(src, fromModal) {
   lbRender();
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow = 'hidden';
+  pushHistory('lightbox');
 }
 
 function lbRender() {
@@ -511,6 +512,23 @@ document.addEventListener('keydown', e => {
   lb.addEventListener('touchmove',  e => { dx = e.touches[0].clientX - sx; }, {passive:true});
   lb.addEventListener('touchend',   () => { if (Math.abs(dx) > 50) lbNav(dx < 0 ? 1 : -1); dx = 0; });
 })();
+
+// Android back button support
+// Push a history state when opening modal or lightbox, pop it to close
+function pushHistory(state) {
+  history.pushState({ overlay: state }, '');
+}
+
+window.addEventListener('popstate', (e) => {
+  const lbOpen = document.getElementById('lightbox').classList.contains('open');
+  const modalOpen = document.getElementById('modalOverlay').classList.contains('open');
+  if (lbOpen) {
+    closeLightbox();
+  } else if (modalOpen) {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+});
 
 async function loadData() {
   document.getElementById('mainContent').innerHTML = '<div class="loader"><div class="spinner"></div><p>Cargando inventario...</p></div>';
@@ -787,6 +805,7 @@ function openModal(idx) {
   document.getElementById('modalUom').textContent    = d.purchaseuom || '—';
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  pushHistory('modal');
 
   // Swipe gesture for mobile
   setupSwipe(document.getElementById('modalImgWrap'), hasCamisa);
