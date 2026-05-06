@@ -327,23 +327,10 @@ const API_URL = 'https://default01de7128f44f4d04b3006a199889f3.2d.environment.ap
 let allData = [];
 let observer = null;
 
-// Convierte cualquier formato de Google Drive a URL directa de imagen
+// Devuelve la URL de imagen lista para usar
 function toImgUrl(url) {
   if (!url || !url.startsWith('http')) return '';
-  url = url.trim();
-
-  // Formato: ?id=FILE_ID  (uc?export=view&id=... o cualquier variante)
-  const m1 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (m1) return 'https://lh3.googleusercontent.com/d/' + m1[1] + '=w800';
-
-  // Formato: /file/d/FILE_ID/
-  const m2 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (m2) return 'https://lh3.googleusercontent.com/d/' + m2[1] + '=w800';
-
-  // URL directa de imagen
-  if (/\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url)) return url;
-
-  return url;
+  return url.trim();
 }
 
 let currentView = 'grid';
@@ -402,8 +389,8 @@ function renderTable() {
 
   const tbody = items.map((d, i) => {
     const idx = allData.indexOf(d);
-    return `<tr>
-      <td><div class="td-thumb-wrap" onclick="openModal(${idx})">
+    return `<tr style="cursor:pointer" onclick="openModal(${idx})">
+      <td><div class="td-thumb-wrap">
         ${d.fotoUrl ? `<img class="td-thumb" src="${d.fotoUrl}" loading="lazy" onerror="this.style.display='none'">` : ''}
       </div></td>
       <td class="td-tela">${d.tela || '—'}</td>
